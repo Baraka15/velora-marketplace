@@ -1,0 +1,16 @@
+{"_e":"root:init","_t":1779473340415,"format":"v0-jsonl","version":"56.1.10"}
+{"_e":"env:mode","_t":1779473340416,"nodeEnv":"development","babelEnv":"development","mode":"development"}
+{"_e":"env:load","_t":1779473340422,"mode":"development","files":["../../../.env.local"],"env":{}}
+{"_e":"devserver:start","_t":1779473340713,"mode":"development","web":true,"baseUrl":"","asyncRoutes":false,"routerRoot":"../../../app","serverComponents":false,"serverActions":false,"serverRendering":false,"apiRoutes":false,"exporting":false}
+{"_e":"metro:config","_t":1779473341157,"serverRoot":"../../..","projectRoot":"../../..","exporting":false,"flags":{"autolinkingModuleResolution":false,"serverActions":false,"serverComponents":false,"reactCompiler":false,"optimizeGraph":false,"treeshaking":false,"logbox":false}}
+{"_e":"metro:server_log","_t":1779473347418,"level":"error","data":["An unknown error occurred while installing React Native DevTools. Details:\n\n[1336:0522/180905.464480:FATAL:sandbox/linux/suid/client/setuid_sandbox_host.cc:166] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /home/vercel-sandbox/.cache/dotslash/af/5aa55d5d0401a9f3a438c9deb082205f28e353/React Native DevTools-linux-x64/chrome-sandbox is owned by root and has mode 4755.\n[1341:0100/000000.529539:ERROR:content/zygote/zygote_linux.cc:672] write: Broken pipe (32)\n"]}
+{"_e":"metro:instantiate","_t":1779473351569,"atlas":false,"workers":3,"host":"::","port":3000}
+{"_e":"metro:bundling:started","_t":1779473355768,"id":"1","platform":"web","environment":null,"entry":"node_modules/.pnpm/expo-router@56.0.4_9087d02f13adca571ad856d41f8b243e/node_modules/expo-router/entry.js"}
+{"_e":"metro:bundling:done","_t":1779473370567,"id":"1","total":3124,"ms":14798.929424}
+{"_e":"metro:client_log","_t":1779473382150,"level":"log","data":["Running application \"main\" with appParams:\n","{\"hydrate\": undefined, \"rootTag\": \"#root\"}","\nDevelopment-level warnings: ON.\nPerformance optimizations: OFF."]}
+{"_e":"metro:client_log","_t":1779473382150,"level":"log","data":["🔄 Requesting auth tokens from parent window"]}
+{"_e":"metro:client_log","_t":1779473382151,"level":"log","data":["🚀 Initializing Blink Auth..."]}
+{"_e":"metro:client_log","_t":1779473382151,"level":"log","data":["🔍 Detected iframe environment, waiting for parent tokens..."]}
+{"_e":"metro:client_log","_t":1779473383114,"level":"log","data":["🔍 Checking storage for tokens:","{\"hasStoredData\": false, \"isIframe\": true, \"storedLength\": 0}"]}
+{"_e":"metro:client_log","_t":1779473383115,"level":"log","data":["❌ No tokens found"]}
+{"_e":"metro:client_log","_t":1779473383115,"level":"log","data":["⚠️ Auth not required or no window.location, continuing without authentication"]}

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { YStack, XStack, SizableText, Input, Button, ScrollView, SafeArea, AppHeader, toast, Switch, Label, View, Image } from '@blinkdotnew/mobile-ui';
-import { Camera, FileText, Check, ChevronDown, Plus, X, AlertCircle } from '@blinkdotnew/mobile-ui';
+import { YStack, XStack, SizableText, Input, Button, ScrollView, SafeArea, AppHeader, toast, Switch, Label, View, Image, Card, Spinner } from '@blinkdotnew/mobile-ui';
+import { Camera, FileText, Check, ChevronDown, Plus, X, AlertCircle, Sparkles, DollarSign } from '@blinkdotnew/mobile-ui';
 import { blink } from '@/lib/blink';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '@/hooks/useAuth';
 import { Platform } from 'react-native';
+import { generateProductDescription, suggestPricing } from '@/lib/ai';
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -36,6 +37,8 @@ export default function CreateProduct() {
   const [thumbnailError, setThumbnailError] = useState<string | null>(null);
   const [digitalFile, setDigitalFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [aiGenerating, setAiGenerating] = useState<'description' | 'pricing' | null>(null);
+  const [pricingSuggestion, setPricingSuggestion] = useState<string | null>(null);
 
   const validateImageSize = async (uri: string): Promise<{ valid: boolean; size?: number }> => {
     try {
@@ -114,6 +117,68 @@ export default function CreateProduct() {
       }
     } catch (error: any) {
       toast('Error', { message: 'Failed to pick file. Please try again.', variant: 'error' });
+    }
+  };
+
+  const handleGenerateDescription = async () => {
+    if (!formData.name) {
+      toast('Product Name Required', { message: 'Enter a product name first to generate a description.', variant: 'error' });
+      return;
+    }
+
+    setAiGenerating('description');
+    try {
+      const result = await generateProductDescription({
+        productName: formData.name,
+        category: formData.category,
+        type: formData.type,
+      });
+
+      if (result.success && result.data) {
+        setFormData({ ...formData, description: result.data });
+        toast('AI Generated', { message: 'Description created successfully!', variant: 'success' });
+      } else {
+        toast('AI Error', { message: result.error || 'Failed to generate description', variant: 'error' });
+      }
+    } catch (error: any) {
+      toast('Error', { message: error.message, variant: 'error' });
+    } finally {
+      setAiGenerating(null);
+    }
+  };
+
+  const handleSuggestPricing = async () => {
+    if (!formData.name) {
+      toast('Product Name Required', { message: 'Enter a product name first to get pricing suggestions.', variant: 'error' });
+      return;
+    }
+
+    setAiGenerating('pricing');
+    setPricingSuggestion(null);
+    try {
+      const result = await suggestPricing({
+        productName: formData.name,
+        category: formData.category,
+        type: formData.type,
+        description: formData.description,
+      });
+
+      if (result.success && result.data) {
+        setPricingSuggestion(result.data);
+        // Extract recommended price and set it
+        const match = result.data.match(/RECOMMENDED:\s*([\d,]+)/);
+        if (match) {
+          const price = match[1].replace(/,/g, '');
+          setFormData({ ...formData, price });
+        }
+        toast('AI Suggestion', { message: 'Pricing suggestions ready!', variant: 'success' });
+      } else {
+        toast('AI Error', { message: result.error || 'Failed to suggest pricing', variant: 'error' });
+      }
+    } catch (error: any) {
+      toast('Error', { message: error.message, variant: 'error' });
+    } finally {
+      setAiGenerating(null);
     }
   };
 
@@ -237,35 +302,74 @@ export default function CreateProduct() {
             onChangeText={(t) => setFormData({ ...formData, name: t })}
           />
 
-          <Input
-            label="Description"
-            placeholder="Tell your customers about this product..."
-            multiline
-            height={100}
-            value={formData.description}
-            onChangeText={(t) => setFormData({ ...formData, description: t })}
-          />
+          <YStack gap="$2">
+            <XStack jc="space-between" ai="center">
+              <Label fontWeight="700">Description</Label>
+              <Button
+                size="$2"
+                variant="outline"
+                icon={aiGenerating === 'description' ? <Spinner size="small" /> : <Sparkles size={14} />}
+                onPress={handleGenerateDescription}
+                disabled={aiGenerating !== null}
+              >
+                {aiGenerating === 'description' ? 'Generating...' : 'AI Generate'}
+              </Button>
+            </XStack>
+            <Input
+              placeholder="Tell your customers about this product..."
+              multiline
+              height={100}
+              value={formData.description}
+              onChangeText={(t) => setFormData({ ...formData, description: t })}
+            />
+          </YStack>
 
-          <XStack gap="$3">
-            <YStack f={1}>
-              <Input
-                label="Price (UGX)"
-                placeholder="0.00"
-                keyboardType="numeric"
-                value={formData.price}
-                onChangeText={(t) => setFormData({ ...formData, price: t })}
-              />
-            </YStack>
-            <YStack f={1}>
-              <Input
-                label="Stock Quantity"
-                placeholder="100"
-                keyboardType="numeric"
-                value={formData.stockQuantity}
-                onChangeText={(t) => setFormData({ ...formData, stockQuantity: t })}
-              />
-            </YStack>
-          </XStack>
+          <YStack gap="$2">
+            <XStack jc="space-between" ai="center">
+              <Label fontWeight="700">Price (UGX)</Label>
+              <Button
+                size="$2"
+                variant="outline"
+                icon={aiGenerating === 'pricing' ? <Spinner size="small" /> : <DollarSign size={14} />}
+                onPress={handleSuggestPricing}
+                disabled={aiGenerating !== null}
+              >
+                {aiGenerating === 'pricing' ? 'Analyzing...' : 'AI Suggest'}
+              </Button>
+            </XStack>
+            <XStack gap="$3">
+              <YStack f={1}>
+                <Input
+                  placeholder="0.00"
+                  keyboardType="numeric"
+                  value={formData.price}
+                  onChangeText={(t) => setFormData({ ...formData, price: t })}
+                />
+              </YStack>
+              <YStack f={1}>
+                <Input
+                  label="Stock Quantity"
+                  placeholder="100"
+                  keyboardType="numeric"
+                  value={formData.stockQuantity}
+                  onChangeText={(t) => setFormData({ ...formData, stockQuantity: t })}
+                />
+              </YStack>
+            </XStack>
+            {pricingSuggestion && (
+              <Card p="$3" br="$3" bg="$backgroundSecondary" bw={1} bc="$color5">
+                <YStack gap="$2">
+                  <XStack ai="center" gap="$2">
+                    <Sparkles size={16} color="$color10" />
+                    <SizableText fontWeight="700" size="$3">AI Pricing Suggestion</SizableText>
+                  </XStack>
+                  <SizableText size="$2" color="$color11" style={{ whiteSpace: 'pre-line' }}>
+                    {pricingSuggestion}
+                  </SizableText>
+                </YStack>
+              </Card>
+            )}
+          </YStack>
 
           <YStack gap="$2">
             <Label fontWeight="700">Product Type</Label>
