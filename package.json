@@ -9,6 +9,7 @@
     "start:web": "EXPO_NO_TELEMETRY=1 npx expo start --web",
     "start:ios": "EXPO_NO_TELEMETRY=1 npx expo start --ios",
     "start:android": "EXPO_NO_TELEMETRY=1 npx expo start --android",
+    "build": "npm run build:web",
     "build:web": "EXPO_NO_TELEMETRY=1 npx expo export --platform web",
     "build:ios": "EXPO_NO_TELEMETRY=1 eas build --platform ios",
     "build:android": "EXPO_NO_TELEMETRY=1 eas build --platform android",
