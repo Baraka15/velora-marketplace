@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { YStack, XStack, SizableText, Input, Button, ScrollView, SafeArea, AppHeader, toast, Card, Image, Spinner } from '@blinkdotnew/mobile-ui';
+import { YStack, XStack, SizableText, Input, Button, ScrollView, SafeArea, AppHeader, toast, Card, Image, Spinner, Badge, Divider } from '@blinkdotnew/mobile-ui';
 import { ShoppingCart, ShieldCheck, Lock, CreditCard } from '@blinkdotnew/mobile-ui';
 import { blink } from '@/lib/blink';
 import { useLocalSearchParams, useRouter } from 'expo-router';

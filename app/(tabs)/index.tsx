@@ -1,4 +1,4 @@
-import { FinanceDashboard, YStack, XStack, SizableText, Button, Card, Spinner, toast, AppHeader, SafeArea, ScrollView, Badge } from '@blinkdotnew/mobile-ui';
+import { FinanceDashboard, YStack, XStack, SizableText, Button, Card, Spinner, toast, AppHeader, SafeArea, ScrollView, Badge, Image } from '@blinkdotnew/mobile-ui';
 import { Plus, ArrowUpRight, Wallet, TrendingUp, MessageCircle, Send, Menu, Bell } from '@blinkdotnew/mobile-ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { blink } from '@/lib/blink';
@@ -97,7 +97,12 @@ export default function Dashboard() {
   return (
     <SafeArea bg="$background">
       <AppHeader
-        title={<SizableText size="$6" fontWeight="800" color="$color10">✦ Velora</SizableText>}
+        title={
+          <Image 
+            source={require('@/assets/images/velora-logo.png')} 
+            style={{ width: 100, height: 36, resizeMode: 'contain' }} 
+          />
+        }
         right={<XStack gap="$3"><Bell size={24} color="$color10" /><Menu size={24} color="$color10" /></XStack>}
       />
       <ScrollView p="$4">

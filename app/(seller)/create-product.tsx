@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
 import { YStack, XStack, SizableText, Input, Button, ScrollView, SafeArea, AppHeader, toast, Switch, Label, View, Image } from '@blinkdotnew/mobile-ui';
-import { Camera, FileText, Check, ChevronDown, Plus, X } from '@blinkdotnew/mobile-ui';
+import { Camera, FileText, Check, ChevronDown, Plus, X, AlertCircle } from '@blinkdotnew/mobile-ui';
 import { blink } from '@/lib/blink';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '@/hooks/useAuth';
+import { Platform } from 'react-native';
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
 export default function CreateProduct() {
   const router = useRouter();
@@ -28,29 +33,87 @@ export default function CreateProduct() {
   });
 
   const [thumbnail, setThumbnail] = useState<string | null>(null);
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
   const [digitalFile, setDigitalFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  const validateImageSize = async (uri: string): Promise<{ valid: boolean; size?: number }> => {
+    try {
+      if (Platform.OS === 'web') {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        return { valid: blob.size <= MAX_IMAGE_SIZE, size: blob.size };
+      } else {
+        // On native, estimate from URI or use FileSystem
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        return { valid: blob.size <= MAX_IMAGE_SIZE, size: blob.size };
+      }
+    } catch {
+      return { valid: true }; // Allow if we can't check
+    }
+  };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    setThumbnailError(null);
+    
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        toast('Permission Required', { message: 'Please allow access to your photo library.', variant: 'error' });
+        return;
+      }
 
-    if (!result.canceled) {
-      setThumbnail(result.assets[0].uri);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        const asset = result.assets[0];
+        
+        // Validate size
+        const { valid, size } = await validateImageSize(asset.uri);
+        if (!valid) {
+          const sizeMB = size ? (size / (1024 * 1024)).toFixed(1) : 'unknown';
+          setThumbnailError(`Image too large (${sizeMB}MB). Max size is 5MB.`);
+          toast('File Too Large', { message: 'Please choose an image under 5MB.', variant: 'error' });
+          return;
+        }
+
+        setThumbnail(asset.uri);
+      }
+    } catch (error: any) {
+      toast('Error', { message: 'Failed to pick image. Please try again.', variant: 'error' });
     }
   };
 
   const pickFile = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: '*/*',
-      copyToCacheDirectory: true,
-    });
+    setFileError(null);
+    
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+      });
 
-    if (!result.canceled) {
-      setDigitalFile(result.assets[0]);
+      if (!result.canceled) {
+        const file = result.assets[0];
+        
+        // Validate file size
+        if (file.size && file.size > MAX_FILE_SIZE) {
+          const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+          setFileError(`File too large (${sizeMB}MB). Max size is 50MB.`);
+          toast('File Too Large', { message: 'Please choose a file under 50MB.', variant: 'error' });
+          return;
+        }
+
+        setDigitalFile(file);
+      }
+    } catch (error: any) {
+      toast('Error', { message: 'Failed to pick file. Please try again.', variant: 'error' });
     }
   };
 
@@ -136,7 +199,7 @@ export default function CreateProduct() {
               height={150}
               br="$4"
               bw={1}
-              bc="$border"
+              bc={thumbnailError ? '$error' : '$border'}
               bs="dashed"
               bg="$backgroundSecondary"
               onPress={pickImage}
@@ -147,11 +210,24 @@ export default function CreateProduct() {
                 <Image source={{ uri: thumbnail }} style={{ width: '100%', height: '100%', borderRadius: 8 }} />
               ) : (
                 <YStack ai="center" gap="$2">
-                  <Camera size={32} color="$color9" />
-                  <SizableText color="$color9">Tap to upload image</SizableText>
+                  <Camera size={32} color={thumbnailError ? '$error' : '$color9'} />
+                  <SizableText color={thumbnailError ? '$error' : '$color9'}>
+                    {thumbnailError || 'Tap to upload image (max 5MB)'}
+                  </SizableText>
                 </YStack>
               )}
             </Button>
+            {thumbnail && (
+              <Button
+                size="$2"
+                variant="outline"
+                alignSelf="flex-start"
+                icon={<X size={14} />}
+                onPress={() => { setThumbnail(null); setThumbnailError(null); }}
+              >
+                Remove Image
+              </Button>
+            )}
           </YStack>
 
           <Input
@@ -213,11 +289,29 @@ export default function CreateProduct() {
               <Label fontWeight="700">Digital File</Label>
               <Button
                 variant="outline"
+                bc={fileError ? '$error' : '$border'}
                 icon={digitalFile ? <Check color="$success" size={18} /> : <FileText size={18} />}
                 onPress={pickFile}
               >
-                {digitalFile ? digitalFile.name : 'Upload File (Ebook, PDF, ZIP)'}
+                {digitalFile ? digitalFile.name : 'Upload File (Ebook, PDF, ZIP - max 50MB)'}
               </Button>
+              {fileError && (
+                <XStack ai="center" gap="$1">
+                  <AlertCircle size={14} color="$error" />
+                  <SizableText size="$2" color="$error">{fileError}</SizableText>
+                </XStack>
+              )}
+              {digitalFile && (
+                <Button
+                  size="$2"
+                  variant="outline"
+                  alignSelf="flex-start"
+                  icon={<X size={14} />}
+                  onPress={() => { setDigitalFile(null); setFileError(null); }}
+                >
+                  Remove File
+                </Button>
+              )}
             </YStack>
           )}
 

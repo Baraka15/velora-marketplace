@@ -1,4 +1,4 @@
-import { LoginScreen, YStack, SizableText, toast } from '@blinkdotnew/mobile-ui';
+import { LoginScreen, YStack, SizableText, toast, Image } from '@blinkdotnew/mobile-ui';
 import { blink } from '@/lib/blink';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -45,7 +45,12 @@ export default function Login() {
       variant="centered-card"
       title="Welcome back"
       subtitle="Sign in to your business dashboard."
-      logo={<SizableText size="$8" fontWeight="800" color="$color10">✦ Velora</SizableText>}
+      logo={
+        <Image 
+          source={require('@/assets/images/velora-logo.png')} 
+          style={{ width: 180, height: 80, resizeMode: 'contain' }} 
+        />
+      }
       providerButtonStyle="brand"
       providers={[
         { id: 'google', name: 'Continue with Google', brand: 'google' }

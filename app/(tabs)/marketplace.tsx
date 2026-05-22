@@ -1,13 +1,34 @@
 import { YStack, XStack, SizableText, SearchBar, ProductCard, ScrollView, SafeArea, AppHeader, Spinner, Tabs, Badge } from '@blinkdotnew/mobile-ui';
 import { useQuery } from '@tanstack/react-query';
 import { blink } from '@/lib/blink';
-import { useState } from 'react';
-import { View } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Dimensions, Platform } from 'react-native';
 import { router } from 'expo-router';
+
+const getResponsiveColumns = (width: number) => {
+  if (Platform.OS === 'web') {
+    if (width >= 1200) return 4;
+    if (width >= 900) return 3;
+    if (width >= 600) return 2;
+  }
+  return 2;
+};
 
 export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [columns, setColumns] = useState(2);
+
+  useEffect(() => {
+    const updateLayout = () => {
+      const { width } = Dimensions.get('window');
+      setColumns(getResponsiveColumns(width));
+    };
+
+    updateLayout();
+    const subscription = Dimensions.addEventListener('change', updateLayout);
+    return () => subscription?.remove();
+  }, []);
 
   const { data: products, isLoading } = useQuery({
     queryKey: ['marketplace-products', searchQuery, activeTab],
@@ -56,9 +77,17 @@ export default function Marketplace() {
           </YStack>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
-            <XStack fw="wrap" jc="space-between" gap="$3">
+            <XStack fw="wrap" gap="$3" style={Platform.OS === 'web' ? { justifyContent: 'flex-start' } : { justifyContent: 'space-between' }}>
               {products?.map((product) => (
-                <View key={product.id} style={{ width: '47%' }}>
+                <View 
+                  key={product.id} 
+                  style={{ 
+                    width: Platform.OS === 'web' 
+                      ? `calc(${100 / columns}% - 12px)` 
+                      : '47%',
+                    marginBottom: Platform.OS === 'web' ? 12 : 0,
+                  }}
+                >
                   <ProductCard
                     title={product.name}
                     price={`UGX ${Number(product.price).toLocaleString()}`}

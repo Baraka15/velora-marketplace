@@ -1,19 +1,36 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { YStack, XStack, SizableText, Button, ScrollView, SafeArea, AppHeader, Spinner, Image, Card, Badge, Divider, toast } from '@blinkdotnew/mobile-ui';
-import { ShoppingCart, Share2, Copy, MessageCircle, ChevronLeft, Star } from '@blinkdotnew/mobile-ui';
+import { ShoppingCart, Share2, Copy, MessageCircle, ChevronLeft, Star, ShieldCheck } from '@blinkdotnew/mobile-ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { blink } from '@/lib/blink';
 import * as Clipboard from 'expo-clipboard';
 import * as Sharing from 'expo-sharing';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Platform, Dimensions } from 'react-native';
+import { View, Platform, Dimensions, Linking } from 'react-native';
 
-const { width } = Dimensions.get('window');
+const getImageSize = (windowWidth: number) => {
+  if (Platform.OS === 'web') {
+    return Math.min(windowWidth, 500);
+  }
+  return windowWidth;
+};
 
 export default function PublicProductPage() {
   const { slug, ref: affiliateRef } = useLocalSearchParams();
   const router = useRouter();
+  const [imageSize, setImageSize] = useState(Dimensions.get('window').width);
+
+  useEffect(() => {
+    const updateSize = () => {
+      const { width } = Dimensions.get('window');
+      setImageSize(getImageSize(width));
+    };
+    
+    updateSize();
+    const subscription = Dimensions.addEventListener('change', updateSize);
+    return () => subscription?.remove();
+  }, []);
 
   // Handle Affiliate Ref Persistence
   useEffect(() => {
@@ -68,13 +85,18 @@ export default function PublicProductPage() {
         right={<Button variant="ghost" icon={<Share2 size={20} color="$color10" />} onPress={handleShare} />}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
-        <YStack pb="$10">
+        <YStack pb="$10" ai={Platform.OS === 'web' ? 'center' : undefined}>
           <Image
             source={{ uri: product.image_url || 'https://picsum.photos/600/600' }}
-            style={{ width: width, height: width, backgroundColor: '#f1f5f9' }}
+            style={{ 
+              width: imageSize, 
+              height: imageSize, 
+              backgroundColor: '#f1f5f9',
+              alignSelf: Platform.OS === 'web' ? 'center' : undefined,
+            }}
           />
           
-          <YStack p="$4" gap="$4">
+          <YStack p="$4" gap="$4" maxWidth={Platform.OS === 'web' ? 600 : undefined} width="100%">
             <YStack gap="$2">
               <XStack jc="space-between" ai="center">
                 <Badge variant="success" size="$1" br="$pill">{product.category || 'General'}</Badge>

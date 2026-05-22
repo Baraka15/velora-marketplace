@@ -20,6 +20,15 @@ export default function Profile() {
     enabled: !!user?.id,
   });
 
+  const handleSignOut = async () => {
+    try {
+      await blink.auth.signOut();
+      router.replace('/(auth)/login');
+    } catch (error: any) {
+      toast('Error', { message: error.message, variant: 'error' });
+    }
+  };
+
   const toggleSupplierMode = async (value: boolean) => {
     try {
       if (profile) {

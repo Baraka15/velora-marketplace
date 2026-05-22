@@ -5,10 +5,12 @@ import { blink } from '@/lib/blink';
 import { useAuth } from '@/hooks/useAuth';
 import * as Clipboard from 'expo-clipboard';
 import { View } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function AffiliateDashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['affiliate-stats', user?.id],
